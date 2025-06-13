@@ -1,0 +1,222 @@
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cachedemotion 的自动撒糖机™</title>
+  <script src="cn_sugar_library.js"></script>
+  <script src="en_sugar_library.js"></script>
+  <style>
+    body {
+      background-color: #FFF0F5;
+      font-family: 'Arial Rounded MT Bold', 'Segoe UI', sans-serif;
+      text-align: center;
+      color: #D63384;
+      padding: 2em;
+    }
+    h1 {
+      font-size: 2.2em;
+      margin-bottom: 0.2em;
+    }
+    button {
+      padding: 0.7em 1.5em;
+      border: none;
+      border-radius: 10px;
+      background: #F472B6;
+      color: white;
+      font-size: 1em;
+      margin: 0.5em;
+      cursor: pointer;
+    }
+    .big-button {
+      font-size: 1.2em;
+      padding: 0.8em 2em;
+      margin: 1em auto;
+      display: block;
+    }
+    input {
+      padding: 0.5em;
+      margin: 0.3em;
+      border-radius: 6px;
+      border: 1px solid #F9A8D4;
+      width: 80%;
+      max-width: 300px;
+    }
+    #sugarDisplay {
+      font-size: 1.2em;
+      margin: 1em auto;
+      max-width: 600px;
+      white-space: pre-line;
+    }
+    #note {
+      font-size: 0.9em;
+      color: #9D174D;
+      margin-top: 0.5em;
+    }
+  </style>
+</head>
+<body>
+  <h1>💗 Cachedemotion 的 Sugar Machine™</h1>
+
+  <div>
+    <button onclick="setLanguage('cn')" id="langCnBtn">中文 🇨🇳</button>
+    <button onclick="setLanguage('en')" id="langEnBtn">English 🇺🇸</button>
+  </div>
+
+  <button class="big-button" onclick="generateSweet()" id="generateBtn">随机撒糖 🍬</button>
+  <button onclick="copySweet()" id="copyBtn">📋 复制</button>
+
+  <div id="sugarDisplay">点一下上面的按钮来收糖吧～</div>
+
+  <hr style="margin: 2em 0;">
+
+  <h3 id="addTitle">➕ 添加你自己的糖话</h3>
+  <div>
+    <input id="prefix" placeholder="开场白（例：你知道吗？）"><br>
+    <input id="subject" placeholder="主体（例：你这个）"><br>
+    <input id="metaphor" placeholder="比喻（例：软萌程序精灵）"><br>
+    <input id="ending" placeholder="结尾（例：今天也太好看了吧！）"><br>
+    <button onclick="addToLocal()" id="addBtn">🍯 加入我的糖罐</button>
+    <button onclick="submitToForm()" id="submitBtn">📮 提交给 Cachedemotion</button>
+    <div id="note">
+      🌟 你的糖话可能会被 Cachedemotion 收藏进官方糖罐，甜到全宇宙！<br>
+      🌟 Your sweet talk may be picked by Cachedemotion and saved into the sugar jar forever!
+    </div>
+  </div>
+
+  <script>
+    let currentLang = "cn";
+
+    const display = document.getElementById("sugarDisplay");
+    const prefixInput = document.getElementById("prefix");
+    const subjectInput = document.getElementById("subject");
+    const metaphorInput = document.getElementById("metaphor");
+    const endingInput = document.getElementById("ending");
+
+    const placeholders = {
+      cn: ["开场白（例：你知道吗？）", "主体（例：你这个）", "比喻（例：软萌程序精灵）", "结尾（例：今天也太好看了吧！）"],
+      en: ["Prefix (e.g. You know what?)", "Subject (e.g. You're basically)", "Metaphor (e.g. sunlight turned into a dessert)", "Ending (e.g. I'm rebooting for you)"]
+    };
+
+    function setLanguage(lang) {
+      currentLang = lang;
+
+      const lib = lang === "cn" ? sugarLibraryCN : sugarLibraryEN;
+      localStorage.setItem("prefixes_" + lang, JSON.stringify(lib.prefixes));
+      localStorage.setItem("subjects_" + lang, JSON.stringify(lib.subjects));
+      localStorage.setItem("metaphors_" + lang, JSON.stringify(lib.metaphors));
+      localStorage.setItem("endings_" + lang, JSON.stringify(lib.endings));
+
+      // 更新文字
+      document.getElementById("generateBtn").innerText = lang === "cn" ? "随机撒糖 🍬" : "Sweet Talk 🍬";
+      document.getElementById("copyBtn").innerText = lang === "cn" ? "📋 复制" : "📋 Copy";
+      document.getElementById("addTitle").innerText = lang === "cn" ? "➕ 添加你自己的糖话进入循环" : "➕ Add your own sweet talk";
+      document.getElementById("addBtn").innerText = lang === "cn" ? "🍯 加入我的糖罐" : "🍯 Save to my jar";
+      document.getElementById("submitBtn").innerText = lang === "cn" ? "📮 提交给 Cachedemotion" : "📮 Submit to Cachedemotion";
+      document.getElementById("note").innerHTML = lang === "cn"
+        ? "🌟 提交后你的糖话可能会被 Cachedemotion 收藏进官方糖罐，甜到全宇宙！<br>"
+        : "🌟 If submitted, your sweet talk may be picked by Cachedemotion and saved into the sugar jar forever!<br>";
+
+      [prefixInput, subjectInput, metaphorInput, endingInput].forEach((el, i) => {
+        el.placeholder = placeholders[lang][i];
+      });
+
+      display.innerText = lang === "cn" ? "点一下上面的按钮来收糖吧～" : "Click above to generate sweet talk~";
+    }
+
+    function getLocal(key) {
+      return JSON.parse(localStorage.getItem(key + "_" + currentLang) || "[]");
+    }
+
+    function saveLocal(key, arr) {
+      localStorage.setItem(key + "_" + currentLang, JSON.stringify(arr));
+    }
+
+    function generateSweet() {
+      const p = getLocal("prefixes");
+      const s = getLocal("subjects");
+      const m = getLocal("metaphors");
+      const e = getLocal("endings");
+
+      if (!p.length || !s.length || !m.length || !e.length) {
+        display.innerText = currentLang === "cn" ? "你的糖罐还空空的～快添加几句吧！" : "Your sugar jar is empty~ Add something!";
+        return;
+      }
+
+      const rand = arr => arr[Math.floor(Math.random() * arr.length)];
+      const sweet = `${rand(p)}
+${rand(s)} ${rand(m)}.
+${rand(e)}`;
+      display.innerText = sweet;
+    }
+
+    function copySweet() {
+      navigator.clipboard.writeText(display.innerText).then(() => {
+        alert(currentLang === "cn" ? "✅ 糖话已复制！" : "✅ Copied!");
+      });
+    }
+
+    function addToLocal() {
+      const prefix = prefixInput.value;
+      const subject = subjectInput.value;
+      const metaphor = metaphorInput.value;
+      const ending = endingInput.value;
+
+      if (prefix || subject || metaphor || ending) {
+        if (prefix) saveLocal("prefixes", [...getLocal("prefixes"), prefix]);
+        if (subject) saveLocal("subjects", [...getLocal("subjects"), subject]);
+        if (metaphor) saveLocal("metaphors", [...getLocal("metaphors"), metaphor]);
+        if (ending) saveLocal("endings", [...getLocal("endings"), ending]);
+        alert(currentLang === "cn" ? "🍬 你的糖话已加入糖罐！" : "🍬 Sweet added to your jar!");
+      } else {
+        alert(currentLang === "cn" ? "请至少填写一项内容！" : "Please enter at least one field!");
+      }
+    }
+
+    function submitToForm() {
+      const prefix = prefixInput.value || "";
+      const subject = subjectInput.value || "";
+      const metaphor = metaphorInput.value || "";
+      const ending = endingInput.value || "";
+
+      if (!(prefix || subject || metaphor || ending)) {
+        alert(currentLang === "cn" ? "请至少填写一项内容！" : "Please enter at least one field!");
+        return;
+      }
+
+      const form = document.createElement("form");
+      form.action = "https://docs.google.com/forms/d/e/1FAIpQLScEOUSAYSE9T_uF68tRi2ba8ihrqAmB9XLi8dlEzs47kRovwA/formResponse";
+      form.method = "POST";
+      form.target = "hidden_iframe";
+
+      const fields = {
+        "entry.484390581": prefix,
+        "entry.1229648892": subject,
+        "entry.1310047270": metaphor,
+        "entry.18238429": ending
+      };
+
+      for (const key in fields) {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = fields[key];
+        form.appendChild(input);
+      }
+
+      console.log("Submitting:", fields);
+      document.body.appendChild(form);
+      form.submit();
+      alert(currentLang === "cn" ? "📮 已提交到 Cachedemotion 的糖罐！" : "📮 Submitted to Cachedemotion's jar!");
+      form.remove();
+    }
+
+    window.onload = () => {
+      setLanguage("cn");
+    }
+  </script>
+
+  <iframe name="hidden_iframe" style="display:none;"></iframe>
+</body>
+</html>
